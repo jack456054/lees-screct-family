@@ -63,7 +63,7 @@ def get_currency_hsbc(currency_attr: str) -> str:
     currency.columns = [u'幣別', u'即期匯率-本行買入', u'即期匯率-本行賣出', u'現金匯率-本行買入', u'現金匯率-本行賣出']
     currency = currency.set_index(u'幣別')
     currency = currency.filter(like=currency_attr, axis=0)
-    sell_price = currency.iloc[0][u'即期匯率-本行賣出']
+    buy_price = currency.iloc[0][u'即期匯率-本行買入']
     currency = currency.T.to_csv()
     currency = list(csv.reader(StringIO(currency)))
     del currency[0]
@@ -79,13 +79,13 @@ def get_currency_hsbc(currency_attr: str) -> str:
 {time}
 {source}
 '''
-    return currency, sell_price
+    return currency, buy_price
 
 
-def check_direct_buy(sell_price_usd: float, sell_price_cny: float) -> str:
-    c_n_ratio = sell_price_cny / sell_price_usd
+def check_direct_buy(buy_price_usd: float, buy_price_cny: float) -> str:
+    c_n_ratio = buy_price_cny / buy_price_usd
     return f'''
-即期匯率-本行賣出(CYN)/ 即期匯率-本行賣出(USD) = {c_n_ratio}
+即期匯率-本行買入(CYN)/ 即期匯率-本行買入(USD) = {c_n_ratio}
 
 * USD 買價 > {1 / c_n_ratio}(CNY)
 應直接換匯 CNY -> NTD
@@ -100,9 +100,9 @@ if __name__ == '__main__':
     # token = TOKEN
     # send_notify(token=token, msg=get_currency_bot('USD'))
     # send_notify(token=token, msg=get_currency_bot('CNY'))
-    currency, sell_price_usd = get_currency_hsbc('USD')
+    currency, buy_price_usd = get_currency_hsbc('USD')
     send_notify(token=token, msg=currency)
-    currency, sell_price_cny = get_currency_hsbc('CNY')
+    currency, buy_price_cny = get_currency_hsbc('CNY')
     send_notify(token=token, msg=currency)
-    msg = check_direct_buy(float(sell_price_usd), float(sell_price_cny))
+    msg = check_direct_buy(float(buy_price_usd), float(buy_price_cny))
     send_notify(token=token, msg=msg)
